@@ -101,15 +101,16 @@ class DbusSolarlogJsonService:
     URL = self._getSolarlogStatusUrl()
     meter_r = requests.post(url = URL, data= json.dumps({"782":None}), headers={"Content-Type":"application/json"})
     
+    meter_t = requests.post(url = URL, data= json.dumps({"801":{"170":None}}), headers={"Content-Type":"application/json"})
     	
     # check for response
     if not meter_r:
         raise ConnectionError("No response from Solarlog - %s" % (URL))
     
-    meter_data = meter_r.json()     
+    meter_data = [meter_r.json(),meter_t.json()]
 
     # check for Json
-    if not meter_data:
+    if not meter_data[0]:
         raise ValueError("Converting response to JSON failed")
     
     
@@ -127,15 +128,15 @@ class DbusSolarlogJsonService:
     try:
        #get data from Solarlog
        meter_data = self._getSolarlogData()
-       
+              
        config = self._getConfig()
        
        #Solarlog Device PAC Mapping 
-       pac1 = int(meter_data['782']['0'])
-       pac2 = int(meter_data['782']['1'])
-       pac3 = int(meter_data['782']['2'])
-       pac= pac1+pac2+pac3
-
+       pac1 = int(meter_data[0]['782']['0'])
+       pac2 = int(meter_data[0]['782']['1'])
+       pac3 = int(meter_data[0]['782']['2'])
+       pac = pac1+pac2+pac3
+       #print(meter_data[1]['801']['170'])
        
        # Inverter No.3 has 3phase output
        lac3 = pac3 / 3
@@ -144,11 +145,14 @@ class DbusSolarlogJsonService:
 
        l2p = lac3
        l3p = lac3
-
+      
+       total = meter_data[1]['801']['170']['109']
        #send data to DBus
        
-       voltage = 230
-       
+       voltage = int(meter_data[1]['801']['170']['103'])
+       if (voltage==0): 
+           voltage=230
+
        self._dbusservice['/Ac/Current'] = round(pac/voltage,2)
        self._dbusservice['/Ac/L1/Current'] = round(l1p/voltage,2)
        self._dbusservice['/Ac/L2/Current'] = round(l2p/voltage,2)
@@ -160,7 +164,11 @@ class DbusSolarlogJsonService:
        self._dbusservice['/Ac/L1/Power'] = l1p
        self._dbusservice['/Ac/L2/Power'] = l2p
        self._dbusservice['/Ac/L3/Power'] = l3p
-            
+
+       self._dbusservice['/Ac/Energy/Forward'] = total / 1000.0
+       self._dbusservice['/Ac/L1/Energy/Forward'] = total / 1000.0 /3
+       self._dbusservice['/Ac/L2/Energy/Forward'] = total / 1000.0 /3
+       self._dbusservice['/Ac/L3/Energy/Forward'] = total / 1000.0 /3            
         
        # increment UpdateIndex - to show that new data is available
        index = self._dbusservice['/UpdateIndex'] + 1  # increment index

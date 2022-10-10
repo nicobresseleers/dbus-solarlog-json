@@ -165,10 +165,38 @@ class DbusSolarlogJsonService:
        self._dbusservice['/Ac/L2/Power'] = l2p
        self._dbusservice['/Ac/L3/Power'] = l3p
 
-       self._dbusservice['/Ac/Energy/Forward'] = total / 1000.0
-       self._dbusservice['/Ac/L1/Energy/Forward'] = total / 1000.0 /3
-       self._dbusservice['/Ac/L2/Energy/Forward'] = total / 1000.0 /3
-       self._dbusservice['/Ac/L3/Energy/Forward'] = total / 1000.0 /3            
+#       Total from Json ?
+#       self._dbusservice['/Ac/Energy/Forward'] = total / 1000.0
+#       self._dbusservice['/Ac/L1/Energy/Forward'] = total / 1000.0 /3
+#       self._dbusservice['/Ac/L2/Energy/Forward'] = total / 1000.0 /3
+#       self._dbusservice['/Ac/L3/Energy/Forward'] = total / 1000.0 /3 
+       
+ 
+       # Get 3p total energy from file
+       with open('/data/dbus-solarlog-json/counter.txt') as csv_file:
+           csv_reader = csv.reader(csv_file, delimiter=';')
+           line_count = 0
+           for row in csv_reader:
+               if line_count == 0:
+                   l1=(row[0])
+                   l2=(row[1])
+                   l3=(row[2])
+
+
+       l1c = float(l1) + float(l1p) * 5 * 1/3600 / 1000
+       l2c = float(l2) + float(l2p) * 5 * 1/3600 / 1000
+       l3c = float(l3) + float(l3p) * 5 * 1/3600 / 1000
+
+       self._dbusservice['/Ac/Energy/Forward'] = l1c + l2c + l3c
+       self._dbusservice['/Ac/L1/Energy/Forward'] = l1c
+       self._dbusservice['/Ac/L2/Energy/Forward'] = l2c
+       self._dbusservice['/Ac/L3/Energy/Forward'] = l3c
+
+       # write 3p total energy to file as kwh.       
+       with open('/data/dbus-solarlog-json/counter.txt', mode='w') as counter_file:
+           counter_writer = csv.writer(counter_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+           counter_writer.writerow([l1c, l2c, l3c])
+
         
        # increment UpdateIndex - to show that new data is available
        index = self._dbusservice['/UpdateIndex'] + 1  # increment index

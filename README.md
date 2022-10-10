@@ -52,6 +52,9 @@ rm main.zip
 ```
 ⚠️ Check configuration after that - because service is already installed an running and with wrong connection data (host, username, pwd) you will spam the log-file
 
+### Change counter.txt
+The script calculates the total energy production based on the power readings and saves it to the counter.txt file. If you don't want to start with zero values, edit the counter.txt and enter the numbers for each phase in kwh. L1;L2;L3
+
 ### Change config.ini
 Within the project there is a file `/data/dbus-solarlog-json/config.ini` - just change the values - most important is the deviceinstance, custom name and phase under "DEFAULT" and host, username and password in section "ONPREMISE". More details below:
 

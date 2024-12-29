@@ -7,6 +7,7 @@ import logging
 import sys
 import os
 import sys
+import csv
 if sys.version_info.major == 2:
     import gobject
 else:
